@@ -13,8 +13,9 @@ int main(int argc, char* argv[]) {
     }
 
     io::io_context io_context;
-    server srv(io_context, static_cast<uint16_t>(std::stoi(argv[1])));
+    server srv(io_context, std::stoi(argv[1]));
     srv.async_accept();
     io_context.run();
+
     return 0;
 }

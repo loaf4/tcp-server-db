@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     // }
 
     io::io_context io_context;
-    std::make_shared<client>(io_context, "127.0.0.1", static_cast<uint16_t>(std::stoi(argv[2])));
+    std::make_shared<client>(io_context)->start(tcp::endpoint({}, std::stoi(argv[2])));
     io_context.run();
 
     return 0;

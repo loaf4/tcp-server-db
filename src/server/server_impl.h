@@ -2,9 +2,7 @@
 #define SERVER_IMPL_H
 
 #include <boost/asio.hpp>
-#include <boost/asio/io_context.hpp>
 #include <memory>
-#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -15,10 +13,6 @@ namespace io = boost::asio;
 using tcp = io::ip::tcp;
 using error_code = boost::system::error_code;
 using namespace std::placeholders;
-
-// using message_handler = std::function<void(std::string)>;
-// using error_handler = std::function<void()>;
-
 
 class session : public std::enable_shared_from_this<session> {
 
@@ -31,10 +25,10 @@ public:
 
 private:
 
-    void async_read();
+    void do_read();
     void on_read(error_code err, std::size_t bytes_transmitted);
 
-    void async_write();
+    void do_write();
     void on_write(error_code err, std::size_t bytes_transmitted);
 
     void message_handler(std::string const &message);
