@@ -211,6 +211,7 @@ void server::async_accept() {
     acceptor_.async_accept([this](error_code err, tcp::socket socket) {
         if (!err) {
             std::make_shared<session>(std::move(socket), storage_)->start();
+            async_accept();
         }
     });
 }
