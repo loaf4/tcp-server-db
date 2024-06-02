@@ -133,7 +133,8 @@ void session::on_put(std::string const& message) {
 
         response_ = "OK\n";
     }
-    storage_[key] = tmp;
+
+    put_in_storage(key, tmp);
 }
 
 void session::on_get(std::string const& message) {
@@ -271,7 +272,7 @@ std::string session::get_from_storage(std::string const& key) {
     return "";
 }
 
-void session::put_from_storage(std::string const& key, std::string const& value) { storage_[key] = value; }
+void session::put_in_storage(std::string const& key, std::string const& value) { storage_[key] = value; }
 
 /* server implemetation */
 

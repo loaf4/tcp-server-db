@@ -57,7 +57,7 @@ private:
     bool is_valid_txt(std::string const &fname);
 
     std::string get_from_storage(std::string const &key);
-    void put_from_storage(std::string const &key, std::string const &value);
+    void put_in_storage(std::string const &key, std::string const &value);
 
     server &server_;
     tcp::socket socket_;
