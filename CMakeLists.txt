@@ -27,6 +27,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(spdlog)
 
+#-------------------
+# Boost
+#-------------------
 find_package(Boost COMPONENTS REQUIRED system)
 
 add_subdirectory(src)

@@ -4,4 +4,4 @@ add_library(Server_impl STATIC
 target_include_directories(Server_impl PUBLIC
     ${CMAKE_CURRENT_LIST_DIR})
 
-target_link_libraries(Server_impl PRIVATE spdlog::spdlog)
+target_link_libraries(Server_impl spdlog::spdlog)

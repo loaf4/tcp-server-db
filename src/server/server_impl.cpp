@@ -1,4 +1,6 @@
 #include "server_impl.h"
+#include "spdlog/common.h"
+#include "spdlog/logger.h"
 
 #include <boost/asio.hpp>
 #include <cstddef>
@@ -35,6 +37,9 @@ void session::on_read(error_code err, size_t bytes_transmitted) {
             buffer_.clear();
         }
     } else {
+        logger_->error("Error: {} on {}.{}", err.to_string(), socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+        logger_->flush();
+
         socket_.close();
     }
 }
@@ -52,11 +57,16 @@ void session::on_write(error_code err, size_t bytes_transmitted) {
         response_.clear();
         do_read();
     } else {
+        logger_->error("Error: {} on {}.{}", err.to_string(), socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+        logger_->flush();
+
         socket_.close();
     }
 }
 
 void session::message_handler(std::string const& message) {
+    logger_->info("Request \"{}\" received from {}.{}", message, socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+    logger_->flush();
     if (message.starts_with("PUT ")) {
         on_put(message);
     } else if (message.starts_with("GET ")) {
@@ -68,6 +78,9 @@ void session::message_handler(std::string const& message) {
     } else if (message.starts_with("DUMP ")) {
         on_dump(message);
     } else {
+        logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+        logger_->flush();
+
         response_ = "NE\n";
     }
 }
@@ -81,11 +94,17 @@ void session::on_put(std::string const& message) {
     ss >> tmp;
     while (ss >> tmp) {
         if (++cnt == 3) {
+            logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+            logger_->flush();
+
             response_ = "NE\n";
             return;
         }
         if (cnt == 1) {
             if (!is_valid_key(tmp)) {
+                logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+                logger_->flush();
+
                 response_ = "NE\n";
                 return;
             }
@@ -94,13 +113,22 @@ void session::on_put(std::string const& message) {
     }
 
     if (cnt != 2) {
+        logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+        logger_->flush();
+
         response_ = "NE\n";
         return;
     }
 
     if (std::string value = get_from_storage(key); value != "") {
+        logger_->info("Response \"{}\" send to {}.{}", "OK " + value, socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+        logger_->flush();
+
         response_ = "OK " + value + "\n";
     } else {
+        logger_->info("Response \"{}\" send to {}.{}", "OK", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+        logger_->flush();
+
         response_ = "OK\n";
     }
     storage_[key] = tmp;
@@ -115,10 +143,16 @@ void session::on_get(std::string const& message) {
     ss >> tmp;
     while (ss >> tmp) {
         if (++cnt == 2) {
+            logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+            logger_->flush();
+
             response_ = "NE\n";
             return;
         }
         if (!is_valid_key(tmp)) {
+            logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+            logger_->flush();
+
             response_ = "NE\n";
             return;
         }
@@ -126,9 +160,15 @@ void session::on_get(std::string const& message) {
     }
 
     if (cnt != 1 || value == "") {
+        logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+        logger_->flush();
+
         response_ = "NE\n";
         return;
     }
+
+    logger_->info("Response \"{}\" send to {}.{}", "OK " + value, socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+    logger_->flush();
 
     response_ = "OK " + value + "\n";
 }
@@ -142,10 +182,16 @@ void session::on_del(std::string const& message) {
     ss >> tmp;
     while (ss >> tmp) {
         if (++cnt == 2) {
+            logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+            logger_->flush();
+
             response_ = "NE\n";
             return;
         }
         if (!is_valid_key(tmp)) {
+            logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+            logger_->flush();
+
             response_ = "NE\n";
             return;
         }
@@ -153,16 +199,26 @@ void session::on_del(std::string const& message) {
     }
 
     if (cnt != 1 || value == "") {
+        logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+        logger_->flush();
+
         response_ = "NE\n";
         return;
     }
 
     storage_.erase(tmp);
+    logger_->info("Response \"{}\" send to {}.{}", "OK " + value, socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+    logger_->flush();
+
     response_ = "OK " + value + "\n";
 }
 
 void session::on_count(std::string const& message) {
     size_t cnt{storage_.size()};
+
+    logger_->info("Response \"{}\" send to {}.{}", "OK " + std::to_string(cnt), socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+    logger_->flush();
+
     response_ = "OK " + std::to_string(cnt) + "\n";
 }
 
@@ -174,17 +230,26 @@ void session::on_dump(std::string const& message) {
     ss >> tmp;
     while (ss >> tmp) {
         if (++cnt == 2) {
+            logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+            logger_->flush();
+
             response_ = "NE\n";
             return;
         }
     }
 
     if (cnt != 1 || !is_valid_txt(tmp)) {
+        logger_->info("Response \"{}\" send to {}.{}", "NE", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+        logger_->flush();
+
         response_ = "NE\n";
         return;
     }
 
     // dumping
+    logger_->info("Response \"{}\" send to {}.{}", "OK", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
+    logger_->flush();
+
     response_ = "OK\n";
 }
 
@@ -207,11 +272,29 @@ void session::put_from_storage(std::string const& key, std::string const& value)
 
 /* server implemetation */
 
+std::string server::current_time_and_date() {
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d__%H-%M-%S");
+    return ss.str();
+}
+
 void server::async_accept() {
     acceptor_.async_accept([this](error_code err, tcp::socket socket) {
         if (!err) {
-            std::make_shared<session>(std::move(socket), storage_)->start();
+            std::make_shared<session>(
+                *this,
+                std::move(socket),
+                storage_,
+                logger_
+            )->start();
+
             async_accept();
+        } else {
+            logger_->error("Error: {} on {}.{}", err.to_string(), socket.remote_endpoint().address().to_string(), socket.remote_endpoint().port());
+            logger_->flush();
         }
     });
 }
