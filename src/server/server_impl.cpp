@@ -2,8 +2,10 @@
 #include "spdlog/common.h"
 #include "spdlog/logger.h"
 
+#include <algorithm>
 #include <boost/asio.hpp>
 #include <cstddef>
+#include <fstream>
 #include <functional>
 #include <istream>
 #include <memory>
@@ -250,6 +252,7 @@ void session::on_dump(std::string const& message) {
     logger_->info("Response \"{}\" send to {}.{}", "OK", socket_.remote_endpoint().address().to_string(), socket_.remote_endpoint().port());
     logger_->flush();
 
+    server_.dump_storage(tmp);
     response_ = "OK\n";
 }
 
@@ -279,6 +282,27 @@ std::string server::current_time_and_date() {
     std::stringstream ss;
     ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d__%H-%M-%S");
     return ss.str();
+}
+
+void server::dump_storage(std::string const &filename) {
+    std::ofstream out(dump_dir_ / ("dump_" + filename));
+
+    for (auto const &it : storage_) {
+        out << it.first << ":" << it.second << "\n";
+    }
+
+    out.close();
+}
+
+void server::upload_storage(std::string const &filename) {
+    std::ifstream in(filename);
+
+    std::string tmp;
+    std::string::size_type pos;
+    while(std::getline(in, tmp)) {
+        pos = tmp.find(":");
+        storage_[tmp.substr(0, pos)] = tmp.substr(pos + 1);
+    }
 }
 
 void server::async_accept() {

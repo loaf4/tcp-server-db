@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 #include <boost/asio.hpp>
+#include <string>
 
 #include "server_impl.h"
 
@@ -25,9 +26,13 @@ int main(int argc, char* argv[]) {
         std::cout << "Dumping directory doesn't exist" << std::endl;
         exit(1);
     }
+    std::string upload_dump {""};
+    if (argc == 5 && fs::exists(argv[4])) {
+        upload_dump = argv[4];
+    }
 
     io::io_context io_context;
-    server srv(io_context, std::stoi(argv[1]), log_dir, dump_dir);
+    server srv(io_context, std::stoi(argv[1]), log_dir, dump_dir, upload_dump);
     srv.async_accept();
     io_context.run();
 

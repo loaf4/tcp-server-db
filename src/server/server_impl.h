@@ -76,7 +76,7 @@ class server {
 
 public:
 
-    server(io::io_context& io_context, std::uint16_t port, fs::path log_dir, fs::path dump_dir) :
+    server(io::io_context& io_context, std::uint16_t port, fs::path log_dir, fs::path dump_dir, std::string const &upload_path = "") :
         io_context_(io_context),
         acceptor_(io_context_, tcp::endpoint(tcp::v4(), port)),
         log_dir_ {log_dir}, 
@@ -92,10 +92,20 @@ public:
         logger_->info("Server starts on {} port", port);
         logger_->flush();
 
+        if (upload_path != "") {
+            logger_->info("Uploads dump from {}", upload_path);
+            logger_->flush();
+
+            upload_storage(upload_path);
+        }
+
         async_accept();
     }
 
     void async_accept();
+
+    void dump_storage(std::string const &filename);
+    void upload_storage(std::string const &filename);
 
     std::string current_time_and_date();
 
